@@ -69,6 +69,33 @@ function get(serviceNowTable, callback) {
     uri: `/api/now/table/${serviceNowTable}?sysparm_limit=1`,
   };
 
+  // Send Request to ServiceNow.
+  // We are passing variable requestOptions for the first argument.
+  // We are passing an anonymous function, an error-first callback,
+  // for the second argument.
+  request(requestOptions, (error, response, body) => {
+    /**
+     * Process ServiceNow error, response and body.
+     * Check error and response code to make sure
+     * response is good.
+     */
+    if (error) {
+      console.error('Error present.');
+      callbackError = error;
+    } else if (!validResponseRegex.test(response.statusCode)) {
+      console.error('Bad response code.');
+      callbackError = response;
+    } else if (response.body.includes('Instance Hibernating page')) {
+      callbackError = 'Service Now instance is hibernating';
+      console.error(callbackError);
+    } else {
+      callbackData = response;
+    }
+    return callback(callbackData, callbackError);
+  });
+
+}
+
 /**
  * @function post
  * @description Call the ServiceNow GET API.
@@ -101,7 +128,6 @@ function post(serviceNowTable, callback) {
     uri: `/api/now/table/${serviceNowTable}`,
   };
 
-
   // Send Request to ServiceNow.
   // We are passing variable requestOptions for the first argument.
   // We are passing an anonymous function, an error-first callback,
@@ -130,12 +156,13 @@ function post(serviceNowTable, callback) {
 }
 
 
-// This test function calls your request and logs any errors.
+/*
+ * This section is used to test your project.
+ * We will test both get() and post() functions.
+ * If either function returns data, print the returned data to console on STDOUT.
+ * If either function returns an error, print the returned data to the console on STDERR.
+ */
 function main() {
-  // Call function get().
-  // We are passing a static argument for parameter serviceNowTable.
-  // We are passing an anonymous function argument, a data-first callback,
-  // for parameter callback.
   get('change_request', (data, error) => {
     if (error) {
       console.error(`\nError returned from GET request:\n${JSON.stringify(error)}`);
